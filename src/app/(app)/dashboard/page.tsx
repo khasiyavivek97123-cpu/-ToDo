@@ -37,7 +37,7 @@ function PriorityDonutChart({
   total: number;
 }) {
   const safeTotal = total || 1;
-  const radius = 34;
+  const radius = 36;
   const circumference = 2 * Math.PI * radius;
 
   // Segment percentages
@@ -62,9 +62,9 @@ function PriorityDonutChart({
   const p4Offset = currentOffset;
 
   return (
-    <div className="flex items-center gap-3">
-      {/* SVG Donut Ring */}
-      <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center gap-1.5">
+      {/* SVG Donut Ring (Slightly larger circle on top) */}
+      <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
           <circle
             cx="50"
@@ -141,15 +141,15 @@ function PriorityDonutChart({
           )}
         </svg>
         <div className="absolute flex flex-col items-center justify-center text-center">
-          <span className="text-sm font-bold text-foreground leading-none">
+          <span className="text-base font-bold text-foreground leading-none">
             {total}
           </span>
           <span className="text-[9px] font-medium text-neutral-400">Total</span>
         </div>
       </div>
 
-      {/* Legend list */}
-      <div className="space-y-0.5 text-xs">
+      {/* Legend list below */}
+      <div className="grid grid-cols-2 gap-x-2.5 gap-y-0.5 text-xs">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-xs bg-red-500 shrink-0" />
           <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-300">P1: {p1}</span>
@@ -256,6 +256,20 @@ export default function DashboardPage() {
   const p4Count = tasks.filter((t) => !t.completed && t.priority === 4).length;
 
   const maxCountInChart = Math.max(...last7Days.map((d) => d.count), 5);
+
+  // Velocity Parameters metrics
+  const total7DayCompletions = last7Days.reduce((acc, d) => acc + d.count, 0);
+  const dailyAverageCompletions = (total7DayCompletions / 7).toFixed(1);
+  const peakDay = last7Days.reduce(
+    (max, d) => (d.count > max.count ? d : max),
+    last7Days[0] || { dayLabel: "N/A", count: 0 }
+  );
+  const velocityEfficiency =
+    totalActiveTasks + total7DayCompletions > 0
+      ? Math.round(
+        (total7DayCompletions / (totalActiveTasks + total7DayCompletions)) * 100
+      )
+      : 0;
 
   // Recent Completed Feed Log
   const completedHistoryFeed: { title: string; timestamp: string }[] = [];
@@ -421,64 +435,133 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 7-Day Completion Velocity Bar Chart + Donut Ring Visualization Card */}
-          <div className="flex-1 flex flex-col p-3.5 rounded-md border border-border bg-surface shadow-xs min-h-0 overflow-hidden space-y-2">
+          {/* 7-Day Completion Velocity, Workload Donut & Parameter Insights Card */}
+          <div className="flex-1 flex flex-col justify-start p-3.5 rounded-md border border-border bg-surface shadow-xs space-y-3.5 min-h-[300px]">
             <div className="flex items-center justify-between shrink-0">
-              <h2 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
                 <span>Completion Velocity & Workload Distribution</span>
               </h2>
+              <span className="text-[10px] font-mono text-neutral-400">7-Day Period</span>
             </div>
 
-            {/* Split Chart Container: Left Bar Chart + Right Donut Pie Chart */}
-            <div className="flex-1 pt-2 pb-1 px-1 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4 items-center min-h-0 overflow-hidden">
-              {/* Left Side: Slim Bars Completion Velocity (col-span-2) */}
-              <div className="sm:col-span-2 h-full flex flex-col justify-end min-h-0">
-                <div className="h-full flex items-end justify-around gap-1.5">
-                  {last7Days.map((day) => {
-                    const heightPercent = Math.round(
-                      (day.count / maxCountInChart) * 100
-                    );
+            {/* UPPER SECTION: Line Chart (Left) + Donut Pie Chart (Right) - Fits 100% Top to Bottom */}
+            <div className="pt-2 pb-2 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch flex-1 min-h-0">
+              {/* Line Chart Section (sm:col-span-2) */}
+              <div className="sm:col-span-2 flex flex-col justify-between h-full min-h-0">
+                <div className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center justify-between shrink-0 mb-1">
+                  <span>Velocity Line Trend</span>
+                  <span className="text-[10px] font-mono text-neutral-400">Y: 0–{maxCountInChart}</span>
+                </div>
 
-                    return (
-                      <div
-                        key={day.dateISO}
-                        className="flex-1 max-w-[36px] h-full flex flex-col items-center justify-end gap-1 group cursor-pointer"
-                      >
-                        {/* Count Badge */}
-                        <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform">
-                          {day.count}
-                        </span>
+                <div className="relative flex-1 flex items-stretch gap-2 min-h-0 pt-1 pb-1">
+                  {/* Y-axis Measuring Parameter Scale */}
+                  <div className="flex flex-col justify-between h-full text-[10px] font-mono text-neutral-400 pr-1.5 border-r border-border/60 shrink-0 select-none pb-6">
+                    <span>{maxCountInChart}</span>
+                    <span>{Math.round(maxCountInChart / 2)}</span>
+                    <span>0</span>
+                  </div>
 
-                        {/* Reduced Width Bar Track */}
-                        <div className="w-full max-w-[20px] bg-neutral-100 dark:bg-neutral-800 rounded-t-xs flex-1 max-h-[130px] flex items-end p-0.5">
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${Math.max(heightPercent, 8)}%` }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
-                            className="w-full bg-primary-600 hover:bg-primary-700 rounded-t-xs transition-colors"
-                          />
-                        </div>
+                  {/* SVG Line Chart Container */}
+                  <div className="flex-1 flex flex-col justify-between min-h-0 h-full relative">
+                    <div className="relative w-full flex-1 min-h-0">
+                      {/* Background Dashed Grid lines */}
+                      <div className="absolute inset-x-0 top-0 border-b border-dashed border-neutral-200 dark:border-neutral-800 pointer-events-none" />
+                      <div className="absolute inset-x-0 top-1/2 border-b border-dashed border-neutral-200 dark:border-neutral-800 pointer-events-none" />
+                      <div className="absolute inset-x-0 bottom-0 border-b border-border pointer-events-none" />
 
-                        {/* Day Label */}
-                        <div className="text-center shrink-0">
-                          <span className="text-[10px] font-semibold text-foreground block leading-none">
+                      {/* SVG Line & Gradient Area */}
+                      {(() => {
+                        const svgWidth = 360;
+                        const svgHeight = 140;
+                        const paddingX = 20;
+                        const paddingY = 14;
+                        const usableWidth = svgWidth - paddingX * 2;
+                        const usableHeight = svgHeight - paddingY * 2;
+
+                        const pts = last7Days.map((d, i) => {
+                          const x = paddingX + i * (usableWidth / 6);
+                          const ratio = d.count / maxCountInChart;
+                          const y = (svgHeight - paddingY) - ratio * usableHeight;
+                          return { x, y, count: d.count, day: d.dayLabel };
+                        });
+
+                        // Line path using cubic bezier curves
+                        let lineD = `M ${pts[0].x} ${pts[0].y}`;
+                        for (let i = 0; i < pts.length - 1; i++) {
+                          const p0 = pts[i];
+                          const p1 = pts[i + 1];
+                          const cpx1 = p0.x + (p1.x - p0.x) / 2;
+                          const cpy1 = p0.y;
+                          const cpx2 = p0.x + (p1.x - p0.x) / 2;
+                          const cpy2 = p1.y;
+                          lineD += ` C ${cpx1} ${cpy1}, ${cpx2} ${cpy2}, ${p1.x} ${p1.y}`;
+                        }
+
+                        // Area path closed at bottom baseline
+                        const areaD = `${lineD} L ${pts[6].x} ${svgHeight - paddingY + 6} L ${pts[0].x} ${svgHeight - paddingY + 6} Z`;
+
+                        return (
+                          <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
+                            <defs>
+                              <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
+                                <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* Area Gradient Fill */}
+                            <path d={areaD} fill="url(#velocityGradient)" />
+
+                            {/* Smooth Curved Line */}
+                            <path d={lineD} fill="none" stroke="#7c3aed" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                            {/* Glowing Data Nodes & Count Badges */}
+                            {pts.map((pt, idx) => (
+                              <g key={idx} className="group cursor-pointer">
+                                <circle
+                                  cx={pt.x}
+                                  cy={pt.y}
+                                  r="4.5"
+                                  className="fill-background stroke-primary-600 dark:stroke-primary-400 group-hover:r-6.5 transition-all"
+                                  strokeWidth="2.5"
+                                />
+                                <text
+                                  x={pt.x}
+                                  y={pt.y - 9}
+                                  textAnchor="middle"
+                                  className="text-[11px] font-bold fill-primary-600 dark:fill-primary-400"
+                                >
+                                  {pt.count}
+                                </text>
+                              </g>
+                            ))}
+                          </svg>
+                        );
+                      })()}
+                    </div>
+
+                    {/* X-axis Day Labels Row */}
+                    <div className="flex items-center justify-between pt-1.5 px-3 border-t border-border/40 shrink-0">
+                      {last7Days.map((day) => (
+                        <div key={day.dateISO} className="text-center">
+                          <span className="text-[11px] font-semibold text-foreground block leading-none">
                             {day.dayLabel}
                           </span>
-                          <span className="text-[8px] text-neutral-400 block leading-tight">
+                          <span className="text-[9px] text-neutral-400 block leading-tight mt-0.5">
                             {day.fullDateLabel}
                           </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Side: Donut Pie Chart Visualization (col-span-1) */}
-              <div className="sm:col-span-1 border-l border-border pl-4 h-full flex flex-col justify-center space-y-2 shrink-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 flex items-center gap-1">
-                  <PieChart className="w-3 h-3 text-primary-500" />
+              {/* Workload Donut Pie Chart (sm:col-span-1) */}
+              <div className="sm:col-span-1 border-l border-border pl-3 h-full flex flex-col items-center justify-center space-y-1 shrink-0">
+                <div className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1 mb-1">
+                  <PieChart className="w-3.5 h-3.5 text-primary-500" />
                   <span>Workload Donut</span>
                 </div>
                 <PriorityDonutChart
@@ -488,6 +571,48 @@ export default function DashboardPage() {
                   p4={p4Count}
                   total={totalActiveTasks}
                 />
+              </div>
+            </div>
+
+            {/* BOTTOM SECTION: 4 Velocity Parameter Cards in a Single Row */}
+            <div className="pt-3 border-t border-border space-y-2 shrink-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                <BarChart2 className="w-3.5 h-3.5 text-primary-500" />
+                <span>Velocity Parameters</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {/* Card 1: Weekly Output */}
+                <div className="p-2.5 sm:p-3 rounded-md border border-border bg-background flex flex-col justify-between">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Weekly Output</span>
+                  <span className="text-sm sm:text-base font-bold text-foreground">{total7DayCompletions} <span className="text-xs font-normal text-neutral-500">tasks</span></span>
+                </div>
+
+                {/* Card 2: Daily Pace */}
+                <div className="p-2.5 sm:p-3 rounded-md border border-border bg-background flex flex-col justify-between">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Daily Pace</span>
+                  <span className="text-sm sm:text-base font-bold text-foreground">{dailyAverageCompletions} <span className="text-xs font-normal text-neutral-500">/day</span></span>
+                </div>
+
+                {/* Card 3: Peak Velocity */}
+                <div className="p-2.5 sm:p-3 rounded-md border border-border bg-background flex flex-col justify-between">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Peak Velocity</span>
+                  <span className="text-xs sm:text-sm font-bold text-primary-600 dark:text-primary-400 truncate">{peakDay.dayLabel} ({peakDay.count})</span>
+                </div>
+
+                {/* Card 4: Efficiency Index */}
+                <div className="p-2.5 sm:p-3 rounded-md border border-border bg-background flex flex-col justify-between space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Efficiency</span>
+                    <span className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">{velocityEfficiency}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(velocityEfficiency, 100)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -526,14 +651,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Completion Activity (Internal Scroll Container) */}
-          <div className="flex-1 flex flex-col p-3.5 rounded-md border border-border bg-surface shadow-xs min-h-0 overflow-hidden space-y-2">
+          <div className="flex-1 flex flex-col p-3.5 rounded-md border border-border bg-surface shadow-xs min-h-0 overflow-hidden space-y-2 max-h-[300px]">
             <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5 shrink-0">
               <History className="w-3.5 h-3.5 text-primary-500" />
               <span>Completion Log ({completedHistoryFeed.length})</span>
             </h3>
 
             {/* Internal Scroll Container */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-0 border-t border-border pt-2">
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1.5 min-h-0 border-t border-border pt-2 custom-scrollbar">
               {completedHistoryFeed.length > 0 ? (
                 completedHistoryFeed.map((item, idx) => (
                   <div
