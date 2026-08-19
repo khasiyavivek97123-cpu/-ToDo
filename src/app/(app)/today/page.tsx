@@ -22,7 +22,7 @@ import {
 } from "@/components/tasks/FilterBar";
 
 import Link from "next/link";
-import { getTodayISO } from "@/lib/utils";
+import { getTodayISO, sortByPriority } from "@/lib/utils";
 
 export default function TodayPage() {
   const tasks = useAppStore((state) => state.tasks);
@@ -38,15 +38,16 @@ export default function TodayPage() {
     (t) => !t.completed && t.dueDate && t.dueDate < todayISO
   ).length;
 
-  // Today tasks: dueDate === todayISO and not completed
-  const todayTasks = filteredTasks.filter(
-    (t) => !t.completed && t.dueDate === todayISO
+  // Today tasks: dueDate === todayISO and not completed (sorted by priority P1 -> P4)
+  const todayTasks = sortByPriority(
+    filteredTasks.filter((t) => !t.completed && t.dueDate === todayISO)
   );
 
-  // Completed tasks due today
-  const completedTodayTasks = filteredTasks.filter(
-    (t) => t.completed && t.dueDate && t.dueDate === todayISO
+  // Completed tasks due today (sorted by priority P1 -> P4)
+  const completedTodayTasks = sortByPriority(
+    filteredTasks.filter((t) => t.completed && t.dueDate && t.dueDate === todayISO)
   );
+
 
   const totalPending = todayTasks.length;
 

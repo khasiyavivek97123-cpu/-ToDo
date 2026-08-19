@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { Task } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, sortByPriority } from "@/lib/utils";
 
 export interface TaskFilterState {
   search: string;
@@ -29,7 +29,7 @@ export const defaultTaskFilterState: TaskFilterState = {
 };
 
 export function filterTasks(tasks: Task[], filters: TaskFilterState): Task[] {
-  return tasks.filter((task) => {
+  const filtered = tasks.filter((task) => {
     // 1. Search query
     if (filters.search.trim()) {
       const q = filters.search.toLowerCase();
@@ -52,6 +52,8 @@ export function filterTasks(tasks: Task[], filters: TaskFilterState): Task[] {
 
     return true;
   });
+
+  return sortByPriority(filtered);
 }
 
 interface FilterBarProps {

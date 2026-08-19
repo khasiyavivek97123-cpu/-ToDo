@@ -7,7 +7,7 @@ import { useAppStore } from "@/lib/store";
 import { QuickAddInput } from "@/components/tasks/QuickAddInput";
 import { TaskItem } from "@/components/tasks/TaskItem";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getTodayISO, isTaskOverdue } from "@/lib/utils";
+import { getTodayISO, isTaskOverdue, sortByPriority } from "@/lib/utils";
 import {
   FilterBar,
   TaskFilterState,
@@ -25,19 +25,26 @@ export default function BacklogPage() {
   const todayISO = getTodayISO();
   const filteredTasks = filterTasks(tasks, filters);
 
-  // Overdue active tasks (moved to Backlog)
-  const overdueTasks = filteredTasks.filter((t) => isTaskOverdue(t, todayISO));
-
-  // Unscheduled active tasks (no dueDate)
-  const unscheduledTasks = filteredTasks.filter((t) => !t.completed && !t.dueDate);
-
-  // Total active backlog tasks
-  const activeTasks = [...overdueTasks, ...unscheduledTasks];
-
-  // Completed backlog tasks
-  const completedTasks = filteredTasks.filter(
-    (t) => t.completed && (!t.dueDate || t.dueDate < todayISO)
+  // Overdue active tasks (moved to Backlog) sorted by priority
+  const overdueTasks = sortByPriority(
+    filteredTasks.filter((t) => isTaskOverdue(t, todayISO))
   );
+
+  // Unscheduled active tasks (no dueDate) sorted by priority
+  const unscheduledTasks = sortByPriority(
+    filteredTasks.filter((t) => !t.completed && !t.dueDate)
+  );
+
+  // Total active backlog tasks sorted by priority
+  const activeTasks = sortByPriority([...overdueTasks, ...unscheduledTasks]);
+
+  // Completed backlog tasks sorted by priority
+  const completedTasks = sortByPriority(
+    filteredTasks.filter(
+      (t) => t.completed && (!t.dueDate || t.dueDate < todayISO)
+    )
+  );
+
 
   const handleScheduleDate = (taskId: string, dateStr: string) => {
     if (!dateStr) return;

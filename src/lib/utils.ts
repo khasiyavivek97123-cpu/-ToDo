@@ -31,3 +31,8 @@ export function formatOverdueIndicator(dueDate: string, todayISO?: string): stri
   return `${diffDays} days overdue`;
 }
 
+export function sortByPriority(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => a.priority - b.priority);
+}
+
+

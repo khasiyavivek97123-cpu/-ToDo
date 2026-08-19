@@ -14,7 +14,7 @@ import {
   filterTasks,
 } from "@/components/tasks/FilterBar";
 
-import { getTodayISO, isTaskOverdue } from "@/lib/utils";
+import { getTodayISO, isTaskOverdue, sortByPriority } from "@/lib/utils";
 
 export default function InboxPage() {
   const tasks = useAppStore((state) => state.tasks);
@@ -27,11 +27,16 @@ export default function InboxPage() {
   const inboxTasks = tasks.filter((t) => !t.projectId);
   const filteredInboxTasks = filterTasks(inboxTasks, filters);
 
-  // Active inbox tasks exclude overdue tasks (which move to Backlog)
-  const activeTasks = filteredInboxTasks.filter(
-    (t) => !t.completed && !isTaskOverdue(t, todayISO)
+  // Active inbox tasks exclude overdue tasks (which move to Backlog) sorted by priority P1 -> P4
+  const activeTasks = sortByPriority(
+    filteredInboxTasks.filter(
+      (t) => !t.completed && !isTaskOverdue(t, todayISO)
+    )
   );
-  const completedTasks = filteredInboxTasks.filter((t) => t.completed);
+  const completedTasks = sortByPriority(
+    filteredInboxTasks.filter((t) => t.completed)
+  );
+
 
 
   return (
