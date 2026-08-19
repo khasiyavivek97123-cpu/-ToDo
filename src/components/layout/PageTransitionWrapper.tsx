@@ -18,7 +18,7 @@ export function PageTransitionWrapper({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -6 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="w-full flex-1 h-full flex flex-col"
+        className="w-full flex-1"
       >
         {children}
       </motion.div>
