@@ -526,14 +526,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Completion Activity (Internal Scroll Container) */}
-          <div className="flex-1 flex flex-col p-3.5 rounded-md border border-border bg-surface shadow-xs min-h-0 overflow-hidden space-y-2">
+          <div className="flex-1 flex flex-col p-3.5 rounded-md border border-border bg-surface shadow-xs min-h-0 overflow-hidden space-y-2 max-h-[220px]">
             <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5 shrink-0">
               <History className="w-3.5 h-3.5 text-primary-500" />
               <span>Completion Log ({completedHistoryFeed.length})</span>
             </h3>
 
             {/* Internal Scroll Container */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-0 border-t border-border pt-2">
+            <div className="flex-1 overflow-y-auto max-h-[160px] space-y-1.5 pr-1 min-h-0 border-t border-border pt-2">
               {completedHistoryFeed.length > 0 ? (
                 completedHistoryFeed.map((item, idx) => (
                   <div
