@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
   Flame,
@@ -12,9 +13,15 @@ import {
   History,
   Check,
   PieChart,
+  FileText,
+  ChevronDown,
+  Download,
+  Calendar,
 } from "lucide-react";
 import { subDays, format } from "date-fns";
 import { useAppStore } from "@/lib/store";
+import { generateInsightsPDF } from "@/lib/pdfExporter";
+import { cn } from "@/lib/utils";
 
 function PriorityDonutChart({
   p1,
@@ -166,6 +173,21 @@ function PriorityDonutChart({
 
 export default function DashboardPage() {
   const tasks = useAppStore((state) => state.tasks);
+  const sections = useAppStore((state) => state.sections);
+  const projects = useAppStore((state) => state.projects);
+
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const pdfRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (pdfRef.current && !pdfRef.current.contains(e.target as Node)) {
+        setPdfMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const now = new Date();
   const todayISO = format(now, "yyyy-MM-dd");
@@ -244,9 +266,14 @@ export default function DashboardPage() {
   });
   completedHistoryFeed.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
 
+  const handleExportPDF = (range: "today" | "week" | "month") => {
+    setPdfMenuOpen(false);
+    generateInsightsPDF(range, tasks, sections, projects);
+  };
+
   return (
     <div className="h-full flex flex-col space-y-3 max-w-5xl mx-auto overflow-hidden min-h-0 select-none">
-      {/* Top Header Card (Solid Theme Colors) */}
+      {/* Top Header Card (Solid Theme Colors + PDF Export Control) */}
       <div className="flex items-center justify-between px-4 py-2.5 rounded-md border border-border bg-surface shadow-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-primary-100 text-primary-800 border border-primary-200 dark:bg-primary-950 dark:text-primary-200 dark:border-primary-800 text-[11px] font-semibold">
@@ -258,15 +285,87 @@ export default function DashboardPage() {
           </h1>
         </div>
 
-        <div className="relative w-12 h-12 shrink-0 hidden sm:block">
-          <Image
-            src="/assets/images/dashboard-illustration.png"
-            alt="Dashboard metrics illustration"
-            width={48}
-            height={48}
-            priority
-            className="w-full h-full object-contain"
-          />
+        {/* Right Header Actions: Export PDF Dropdown */}
+        <div className="flex items-center gap-3">
+          <div ref={pdfRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border border-border bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold text-foreground transition-all cursor-pointer shadow-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <FileText className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
+              <span>Export PDF Report</span>
+              <ChevronDown
+                className={cn(
+                  "w-3.5 h-3.5 text-neutral-400 transition-transform duration-200",
+                  pdfMenuOpen && "rotate-180 text-primary-500"
+                )}
+              />
+            </button>
+
+            <AnimatePresence>
+              {pdfMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute right-0 top-full mt-1.5 w-56 p-1.5 rounded-md border border-border bg-surface shadow-xl z-50 text-xs space-y-1"
+                >
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 border-b border-border mb-1">
+                    Proof of Progress Export
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleExportPDF("today")}
+                    className="w-full px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center justify-between text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-700 dark:hover:text-primary-300 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Today&apos;s Progress</span>
+                    </div>
+                    <Download className="w-3 h-3 text-neutral-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleExportPDF("week")}
+                    className="w-full px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center justify-between text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-700 dark:hover:text-primary-300 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-primary-500" />
+                      <span>Last 7 Days (Weekly)</span>
+                    </div>
+                    <Download className="w-3 h-3 text-neutral-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleExportPDF("month")}
+                    className="w-full px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center justify-between text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-700 dark:hover:text-primary-300 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Award className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Last 30 Days (Monthly)</span>
+                    </div>
+                    <Download className="w-3 h-3 text-neutral-400" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="relative w-10 h-10 shrink-0 hidden sm:block">
+            <Image
+              src="/assets/images/dashboard-illustration.png"
+              alt="Dashboard metrics illustration"
+              width={40}
+              height={40}
+              priority
+              className="w-full h-full object-contain"
+            />
+          </div>
         </div>
       </div>
 

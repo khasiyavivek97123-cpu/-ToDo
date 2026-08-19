@@ -19,6 +19,7 @@ import {
   Check,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
+import { playCompletionSound } from "@/lib/sound";
 import { PriorityLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -146,7 +147,12 @@ export function TaskDetailPanel() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => toggleComplete(task.id)}
+                  onClick={() => {
+                    if (!task.completed) {
+                      playCompletionSound();
+                    }
+                    toggleComplete(task.id);
+                  }}
                   aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
                   className={cn(
                     "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer",

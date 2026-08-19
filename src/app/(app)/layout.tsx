@@ -3,6 +3,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { TaskDetailPanel } from "@/components/tasks/TaskDetailPanel";
 import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
+import { CelebrationModal } from "@/components/ui/CelebrationModal";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,6 +27,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Global Task Detail Side Panel / Bottom Sheet */}
       <TaskDetailPanel />
+
+      {/* Milestone Celebration Pop-up Modal */}
+      <CelebrationModal />
     </div>
   );
 }
