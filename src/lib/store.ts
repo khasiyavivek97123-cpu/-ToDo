@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { Task, Section, Project, Attachment, PriorityLevel } from "./types";
 import { getNextDueDate } from "./recurrence";
 
@@ -41,7 +41,7 @@ const defaultProjects: Project[] = [
 ];
 
 const defaultSections: Section[] = [
-  { id: "sec-work-1", name: "Q3 Deliverables", taskIds: ["task-1", "task-2"] },
+  { id: "sec-work-1", name: "Q3 Deliverables", taskIds: ["task-1", "task-2", "task-4"] },
   { id: "sec-pers-1", name: "Weekly Habits", taskIds: ["task-3"] },
 ];
 
@@ -49,6 +49,8 @@ const getTodayISO = () => format(new Date(), "yyyy-MM-dd");
 
 const createDefaultTasks = (): Task[] => {
   const todayISO = getTodayISO();
+  const overdueISO = format(subDays(new Date(), 4), "yyyy-MM-dd");
+
   return [
     {
       id: "task-1",
@@ -93,6 +95,21 @@ const createDefaultTasks = (): Task[] => {
       recurrence: "daily",
       attachments: [],
       createdAt: new Date().toISOString(),
+      completedHistory: [],
+    },
+    {
+      id: "task-4",
+      title: "Review Q2 financial roadmap & budget allocation",
+      notes: "Missed deadline - automatically moved to Backlog.",
+      completed: false,
+      dueDate: overdueISO,
+      dueTime: "14:00",
+      priority: 1,
+      sectionId: "sec-work-1",
+      projectId: "work",
+      recurrence: null,
+      attachments: [],
+      createdAt: subDays(new Date(), 5).toISOString(),
       completedHistory: [],
     },
   ];

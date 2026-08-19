@@ -21,31 +21,34 @@ import {
   filterTasks,
 } from "@/components/tasks/FilterBar";
 
+import Link from "next/link";
+import { getTodayISO } from "@/lib/utils";
+
 export default function TodayPage() {
   const tasks = useAppStore((state) => state.tasks);
   const [showCompleted, setShowCompleted] = useState(false);
   const [filters, setFilters] = useState<TaskFilterState>(defaultTaskFilterState);
 
-  const todayISO = format(new Date(), "yyyy-MM-dd");
+  const todayISO = getTodayISO();
 
   const filteredTasks = filterTasks(tasks, filters);
 
-  // Overdue tasks: dueDate < todayISO and not completed
-  const overdueTasks = filteredTasks.filter(
+  // Overdue tasks that moved to Backlog
+  const overdueMovedCount = filteredTasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < todayISO
-  );
+  ).length;
 
   // Today tasks: dueDate === todayISO and not completed
   const todayTasks = filteredTasks.filter(
     (t) => !t.completed && t.dueDate === todayISO
   );
 
-  // Completed tasks due today or previously overdue
+  // Completed tasks due today
   const completedTodayTasks = filteredTasks.filter(
-    (t) => t.completed && t.dueDate && t.dueDate <= todayISO
+    (t) => t.completed && t.dueDate && t.dueDate === todayISO
   );
 
-  const totalPending = overdueTasks.length + todayTasks.length;
+  const totalPending = todayTasks.length;
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -66,23 +69,24 @@ export default function TodayPage() {
       {/* Filter Bar */}
       <FilterBar filters={filters} onFilterChange={setFilters} />
 
-      {/* Overdue Subsection (Solid Subtle Light Red Banner) */}
-      {overdueTasks.length > 0 && (
-        <div className="rounded-md border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950 p-3 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Overdue ({overdueTasks.length})</span>
+      {/* Overdue Notice Banner (Overdue tasks move to Backlog page) */}
+      {overdueMovedCount > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/40 p-3 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-medium">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              <strong>{overdueMovedCount}</strong> {overdueMovedCount === 1 ? "task" : "tasks"} missed {overdueMovedCount === 1 ? "its" : "their"} due date and moved to <strong>Backlog</strong>.
+            </span>
           </div>
-
-          <div className="space-y-2">
-            <AnimatePresence initial={false}>
-              {overdueTasks.map((task) => (
-                <TaskItem key={task.id} task={task} />
-              ))}
-            </AnimatePresence>
-          </div>
+          <Link
+            href="/backlog"
+            className="px-2.5 py-1 rounded-sm bg-amber-600 hover:bg-amber-700 text-white font-semibold text-[11px] transition-colors shrink-0 shadow-2xs"
+          >
+            View Backlog
+          </Link>
         </div>
       )}
+
 
       {/* Today Tasks Section */}
       <div className="space-y-2">
@@ -94,13 +98,13 @@ export default function TodayPage() {
               ))}
             </AnimatePresence>
           </div>
-        ) : overdueTasks.length === 0 ? (
+        ) : (
           <EmptyState
             title="Nothing due today"
             subtitle="Enjoy your day, or use the quick add input above to schedule new tasks!"
             icon={<CheckCircle2 className="w-5 h-5 text-primary-500" />}
           />
-        ) : null}
+        )}
       </div>
 
       {/* Completed Tasks Collapsible Section */}

@@ -9,10 +9,11 @@ import {
   Trash2,
   Edit2,
   Folder,
+  AlertCircle,
 } from "lucide-react";
 import { Task } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, isTaskOverdue, formatOverdueIndicator, getTodayISO } from "@/lib/utils";
 
 interface TaskItemProps {
   task: Task;
@@ -27,6 +28,9 @@ export function TaskItem({ task }: TaskItemProps) {
 
   const matchedSection = sections.find((s) => s.id === task.sectionId);
   const matchedProject = projects.find((p) => p.id === task.projectId);
+
+  const todayISO = getTodayISO();
+  const overdue = isTaskOverdue(task, todayISO);
 
   const getPriorityBadge = (priority: number) => {
     switch (priority) {
@@ -48,7 +52,10 @@ export function TaskItem({ task }: TaskItemProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className="group flex items-center justify-between gap-3 px-4 py-3 rounded-md border border-border bg-surface hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:shadow-[inset_0_1px_3px_rgba(0,0,0,0.06)] dark:hover:shadow-[inset_0_1px_3px_rgba(0,0,0,0.4)] transition-all shadow-2xs"
+      className={cn(
+        "group flex items-center justify-between gap-3 px-4 py-3 rounded-md border bg-surface hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:shadow-[inset_0_1px_3px_rgba(0,0,0,0.06)] dark:hover:shadow-[inset_0_1px_3px_rgba(0,0,0,0.4)] transition-all shadow-2xs",
+        overdue ? "border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/20" : "border-border"
+      )}
     >
       {/* Left: Checkbox + Title + Meta */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -122,10 +129,19 @@ export function TaskItem({ task }: TaskItemProps) {
               P{task.priority}
             </span>
 
-            {/* Due Date & Deadline Time Pill */}
+            {/* Due Date & Deadline Time Pill with Overdue indicator */}
             {task.dueDate && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200 text-[11px] font-semibold shadow-2xs">
-                {task.dueTime ? (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm border text-[11px] font-semibold shadow-2xs",
+                  overdue
+                    ? "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+                    : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200"
+                )}
+              >
+                {overdue ? (
+                  <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400 shrink-0" />
+                ) : task.dueTime ? (
                   <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
                 ) : (
                   <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -134,6 +150,11 @@ export function TaskItem({ task }: TaskItemProps) {
                   {task.dueDate}
                   {task.dueTime ? ` @ ${task.dueTime}` : ""}
                 </span>
+                {overdue && (
+                  <span className="ml-1 pl-1 border-l border-red-300 dark:border-red-800 font-bold text-red-700 dark:text-red-300">
+                    • {formatOverdueIndicator(task.dueDate, todayISO)}
+                  </span>
+                )}
               </span>
             )}
 

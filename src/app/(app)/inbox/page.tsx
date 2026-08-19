@@ -14,17 +14,25 @@ import {
   filterTasks,
 } from "@/components/tasks/FilterBar";
 
+import { getTodayISO, isTaskOverdue } from "@/lib/utils";
+
 export default function InboxPage() {
   const tasks = useAppStore((state) => state.tasks);
   const [showCompleted, setShowCompleted] = useState(false);
   const [filters, setFilters] = useState<TaskFilterState>(defaultTaskFilterState);
 
+  const todayISO = getTodayISO();
+
   // Filter tasks with no project assigned
   const inboxTasks = tasks.filter((t) => !t.projectId);
   const filteredInboxTasks = filterTasks(inboxTasks, filters);
 
-  const activeTasks = filteredInboxTasks.filter((t) => !t.completed);
+  // Active inbox tasks exclude overdue tasks (which move to Backlog)
+  const activeTasks = filteredInboxTasks.filter(
+    (t) => !t.completed && !isTaskOverdue(t, todayISO)
+  );
   const completedTasks = filteredInboxTasks.filter((t) => t.completed);
+
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
